@@ -141,6 +141,7 @@ namespace jbirchall_shuffle
         /// 
         /// But the nice thing is that because we can be specific, we can implement
         /// more ideal operations.
+        /// 
         /// </remarks>
         protected unsafe void RadixSort(int* pNumbers, int nSize)
         {
@@ -149,51 +150,59 @@ namespace jbirchall_shuffle
             int nBitsPerInt = 32;
             int nDimensions = 1 << nBitsPerGroup;
 
-            // Working storage arrays.
-            int* pTemp = (int*)Marshal.AllocHGlobal(nSize * sizeof(int));
-            if (pTemp == null) throw new OutOfMemoryException();
-
-            int* pCount = (int*)Marshal.AllocHGlobal(nDimensions * sizeof(int));
-            if (pCount == null) throw new OutOfMemoryException();
-
-            int* pPrefixes = (int*)Marshal.AllocHGlobal(nDimensions * sizeof(int));
-            if (pPrefixes == null) throw new OutOfMemoryException();
-
-
             // number of groups 
             int groups = (int)Math.Ceiling((double)nBitsPerInt / (double)nBitsPerGroup);
 
             // the mask to identify groups 
             int mask = (1 << nBitsPerGroup) - 1;
 
-            for (int c = 0, shift = 0; c < groups; c++, shift += nBitsPerGroup)
+            // Working storage arrays.
+            int* pTemp = null;
+            int* pCount = null;
+            int* pPrefixes = null;
+
+            try
             {
-                // Reset pCount
-                for (int j = 0; j < nDimensions; j++)
-                    pCount[j] = 0;
+                pTemp = (int*)Marshal.AllocHGlobal(nSize * sizeof(int));
+                if (pTemp == null) throw new OutOfMemoryException();
 
-                // counting elements of the c-th group 
-                for (int i = 0; i < nSize; i++)
-                    pCount[(pNumbers[i] >> shift) & mask]++;
+                pCount = (int*)Marshal.AllocHGlobal(nDimensions * sizeof(int));
+                if (pCount == null) throw new OutOfMemoryException();
 
-                // calculating prefixes 
-                pPrefixes[0] = 0;
-                for (int i = 1; i < nDimensions; i++)
-                    pPrefixes[i] = pPrefixes[i - 1] + pCount[i - 1];
+                pPrefixes = (int*)Marshal.AllocHGlobal(nDimensions * sizeof(int));
+                if (pPrefixes == null) throw new OutOfMemoryException();
 
-                // from pNumbers[] to pTemp[] elements ordered by c-th group 
-                for (int i = 0; i < nSize; i++)
-                    pTemp[pPrefixes[(pNumbers[i] >> shift) & mask]++] = pNumbers[i];
+                for (int c = 0, shift = 0; c < groups; c++, shift += nBitsPerGroup)
+                {
+                    // Reset pCount
+                    for (int j = 0; j < nDimensions; j++)
+                        pCount[j] = 0;
 
-                // pNumbers[] = pTemp[] and start again
-                for (int i = 0; i < nSize; i++)
-                    pNumbers[i] = pTemp[i];
+                    // counting elements of the c-th group 
+                    for (int i = 0; i < nSize; i++)
+                        pCount[(pNumbers[i] >> shift) & mask]++;
+
+                    // calculating prefixes 
+                    pPrefixes[0] = 0;
+                    for (int i = 1; i < nDimensions; i++)
+                        pPrefixes[i] = pPrefixes[i - 1] + pCount[i - 1];
+
+                    // from pNumbers[] to pTemp[] elements ordered by c-th group 
+                    for (int i = 0; i < nSize; i++)
+                        pTemp[pPrefixes[(pNumbers[i] >> shift) & mask]++] = pNumbers[i];
+
+                    // pNumbers[] = pTemp[] and start again
+                    for (int i = 0; i < nSize; i++)
+                        pNumbers[i] = pTemp[i];
+                }
             }
+            finally
+            {
 
-            Marshal.FreeHGlobal((IntPtr)pTemp);
-            Marshal.FreeHGlobal((IntPtr)pCount);
-            Marshal.FreeHGlobal((IntPtr)pPrefixes);
-
+                if (null != pTemp) Marshal.FreeHGlobal((IntPtr)pTemp);
+                if (null != pCount) Marshal.FreeHGlobal((IntPtr)pCount);
+                if (null != pPrefixes) Marshal.FreeHGlobal((IntPtr)pPrefixes);
+            }
         }
     }
 }
