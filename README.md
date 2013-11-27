@@ -1,15 +1,7 @@
 jbirchall-pandell-git
 =====================
 
-Pandell Application
+Implementation of a series of shuffle algorithms to demonstrate my baseline programming style and to play with C#.  
 
-Implementation of the Shuffle screening problem.
+If you have any questions, feel free to raise defects with the code or contact me directly.
 
-Feel free to comment, raise defects and do code reviews on GitHub though I will be deleting this project after
-we're done.
-
-In general, this has been a surprising amount of fun and I appreciate the opportunity to apply.
-
-Best regards,
-
-James.
